@@ -1,47 +1,63 @@
 # 算命学×マヤ暦コンサルシステム
 
-算命学とマヤ暦に基づいた総合的なコンサルティングシステムのMVP
+生年月日から算命学とマヤ暦に基づいた総合的なアドバイスを提供するWebアプリケーション
 
-## 概要
+## 📊 システム概要
 
-このシステムは、算命学とマヤ暦の知識を活用し、生年月日から決定論的に計算された結果をもとに、女性向けの総合的なアドバイスを提供します。
+このシステムは、算命学の命式計算（干支・五行配点・守護神選定）とマヤ暦の計算（Kin・紋章・音・ウェイブスペル）を統合し、女性向けの悩み相談（仕事/恋愛/人間関係/健康/運気）に対して再現性のある助言を提供します。
 
-### 特徴
+### 主な機能
 
-- **決定論的計算**: 算命学とマヤ暦のアルゴリズムは完全に決定論的で、同じ入力には常に同じ結果を返します
-- **LLM整形**: 大規模言語モデルは説明文の整形のみに使用し、計算結果には影響しません
-- **4つのUI画面**: ホーム（入力）、結果表示、履歴、管理画面
-- **カスタマイズ可能**: 温度・煽り度のスライダーで出力トーンを調整可能
+- 📅 生年月日・出生時刻からの命式計算
+- 🔮 算命学の四柱推命（年柱・月柱・日柱・時柱）
+- 🌟 マヤ暦のツォルキン計算
+- 💡 テーマ別スコア算出（仕事/恋愛/健康/自己成長）
+- 🤖 LLMによる結果の整形と提案生成
 
-## プロジェクト構造
+## 🏗️ アーキテクチャ
 
 ```
-.
-├── app/
-│   ├── frontend/          # React + Vite フロントエンド
-│   │   ├── src/
-│   │   │   ├── pages/    # ページコンポーネント
-│   │   │   ├── components/ # 共通コンポーネント
-│   │   │   ├── App.tsx
-│   │   │   └── main.tsx
-│   │   ├── package.json
-│   │   └── vite.config.ts
-│   ├── api/               # Python Flask バックエンド（実装予定）
-│   └── tests/             # テストコード
-├── 算命学の要件定義書.md
-├── 算命学命式計算アルゴリズム仕様.md
-└── README.md
+┌─────────────────┐      HTTPS       ┌──────────────────┐
+│   Frontend      │ ◄──────────────► │   Backend API    │
+│   (Vercel)      │     REST API     │   (Render)       │
+│  React + Vite   │                  │  Python + Flask  │
+└─────────────────┘                  └────────┬─────────┘
+                                              │
+                                              ▼
+                                     ┌─────────────────┐
+                                     │  Google Sheets  │
+                                     │   (Database)    │
+                                     └─────────────────┘
 ```
 
-## セットアップ
+## 🚀 クイックスタート
 
-### 必要な環境
+### 必要環境
 
-- Node.js 18以上
+- Node.js 18+
+- Python 3.11+
 - npm または yarn
-- Python 3.11以上（バックエンド実装時）
 
-### フロントエンドの起動
+### ローカル開発環境のセットアップ
+
+#### 1. リポジトリのクローン
+
+```bash
+git clone https://github.com/taiyousan15/suumeigaku-maya-consul-system.git
+cd suumeigaku-maya-consul-system
+```
+
+#### 2. バックエンドの起動
+
+```bash
+cd app/api
+pip install -r requirements.txt
+python3 main.py
+```
+
+→ http://localhost:8080/ で起動
+
+#### 3. フロントエンドの起動
 
 ```bash
 cd app/frontend
@@ -49,89 +65,104 @@ npm install
 npm run dev
 ```
 
-ブラウザで http://localhost:3000/ にアクセス
+→ http://localhost:3001/ で起動
 
-### 現在の実装状況
+#### 4. ブラウザでアクセス
 
-✅ **完了**
-- フロントエンドUI（4ページ）
-- 入力フォーム（生年月日、出生時刻、カテゴリ選択）
-- 結果表示（モックデータ）
-- LLM設定スライダー
-- レスポンシブデザイン
+http://localhost:3001/ を開いて、生年月日を入力すると分析結果が表示されます。
 
-🚧 **実装中**
-- バックエンドAPI（Flask + Python）
-- 算命学の命式計算ロジック
-- マヤ暦の計算ロジック
-- Google Sheets連携
-- LLM統合（OpenAI API）
+## 📁 プロジェクト構成
 
-📋 **今後の予定**
-- 認証・認可機能
-- PDF出力
-- メール配信
-- レート制限
-- デプロイ（Render + Vercel）
+```
+.
+├── app/
+│   ├── api/                          # バックエンドAPI
+│   │   ├── main.py                   # Flask APIエントリーポイント
+│   │   ├── suanming.py               # 算命学計算エンジン
+│   │   ├── maya.py                   # マヤ暦計算エンジン
+│   │   ├── suanming_knowledge.yaml   # 算命学ナレッジベース
+│   │   └── requirements.txt          # Python依存パッケージ
+│   └── frontend/                     # フロントエンド
+│       ├── src/
+│       │   ├── pages/                # ページコンポーネント
+│       │   ├── components/           # 共通コンポーネント
+│       │   └── main.tsx              # エントリーポイント
+│       ├── package.json
+│       └── vite.config.ts
+├── tests/                            # テストコード
+│   └── test_suanming.py              # 算命学テスト（25件）
+├── docs/                             # ドキュメント
+│   └── deployment-plan.md            # デプロイ実行計画書
+├── 算命学の要件定義書.md
+└── 算命学命式計算アルゴリズム仕様.md
+```
 
-## 画面紹介
+## 🧪 テスト
 
-### 1. ホーム（入力画面）
-- 生年月日の入力（必須）
-- 出生時刻・出生地（任意）
-- 相談カテゴリの選択
-- 温度・煽り度の調整
+### バックエンドテスト
 
-### 2. 結果画面
-- 総合スコア表示
-- 算命学の分析結果（日干支、主星、従星、五行バランス）
-- マヤ暦の分析結果（Kin、太陽の紋章、銀河の音）
-- タブ切り替えで各テーマ別の詳細表示
+```bash
+cd tests
+pytest test_suanming.py -v
+```
 
-### 3. 履歴画面
-- 過去の分析履歴一覧
-- カテゴリ・日付フィルタ
-- CSV出力（実装予定）
+**結果**: 25テスト全て成功
 
-### 4. 管理画面
-- スコア重み設定（算命学/マヤ暦）
-- LLM設定（最大トークン数）
-- レート制限設定
-- 利用統計表示
+### フロントエンドビルド
 
-## 技術スタック
+```bash
+cd app/frontend
+npm run build
+```
 
-### フロントエンド
-- **React 18**: UIフレームワーク
-- **TypeScript**: 型安全性
-- **Vite**: ビルドツール
-- **Zustand**: 状態管理（実装予定）
-- **Axios**: HTTP通信（実装予定）
+## 🌐 デプロイ
 
-### バックエンド（実装予定）
-- **Python 3.11**: プログラミング言語
-- **Flask**: Webフレームワーク
-- **Pydantic**: データバリデーション
-- **Google Sheets API**: データストレージ
-- **OpenAI API**: LLM統合
+詳細なデプロイ手順は [docs/deployment-plan.md](docs/deployment-plan.md) を参照してください。
 
-## API仕様（実装予定）
+### 概要
 
-### POST /api/v1/analyze
-生年月日から算命学とマヤ暦を分析
+| コンポーネント | プラットフォーム | URL例 |
+|--------------|----------------|-------|
+| フロントエンド | Vercel | https://suumeigaku-maya.vercel.app |
+| バックエンド | Render | https://suumeigaku-maya-api.onrender.com |
+| データベース | Google Sheets | - |
+
+### デプロイコマンド
+
+**Vercel（フロントエンド）**
+```bash
+cd app/frontend
+vercel --prod
+```
+
+**Render（バックエンド）**
+- GitHubプッシュで自動デプロイ
+- または Render Dashboard から手動デプロイ
+
+## 📊 API仕様
+
+### エンドポイント
+
+#### `GET /api/v1/health`
+ヘルスチェック
+
+**レスポンス:**
+```json
+{
+  "status": "ok",
+  "service": "suanming-api",
+  "version": "1.0.0"
+}
+```
+
+#### `POST /api/v1/analyze`
+算命学×マヤ暦の総合分析
 
 **リクエスト:**
 ```json
 {
-  "birthdate": "1992-07-15",
-  "birth_time": "12:00",
-  "birth_place": "Tokyo",
-  "categories": ["仕事", "恋愛"],
-  "llm_prefs": {
-    "temperature": 0.5,
-    "intensity": 6,
-    "max_tokens": 800
-  }
+  "birthdate": "2020-02-05",
+  "birthtime": "12:00"
 }
 ```
 
@@ -139,41 +170,74 @@ npm run dev
 ```json
 {
   "request_id": "uuid",
+  "ts": "2025-10-23T12:34:56+09:00",
   "data": {
-    "suanming": {...},
-    "maya": {...},
-    "scores": {...},
+    "suanming": {
+      "year_gan": "庚", "year_shi": "子",
+      "day_gan": "甲", "day_shi": "子",
+      "five_elements_score": {"木": 36, "火": 70, ...},
+      "guardian_gods": ["木", "土", "水"]
+    },
+    "maya": {
+      "kin": 183,
+      "solar_seal": "青い夜",
+      "tone": 1,
+      "wavespell": "青い鷹"
+    },
+    "scores": {
+      "overall": 0.72,
+      "work": 0.68,
+      "love": 0.75,
+      "health": 0.61,
+      "growth": 0.78
+    },
     "insights": [...]
   }
 }
 ```
 
-## 開発
+## 🔧 技術スタック
 
-### コミット規約
-```
-feat: 新機能
-fix: バグ修正
-docs: ドキュメント
-style: コードスタイル
-refactor: リファクタリング
-test: テスト
-```
+### フロントエンド
+- React 18.2.0
+- TypeScript 5.3.3
+- Vite 5.0.8
+- React Router Dom 6.20.0
 
-### ブランチ戦略
-- `main`: 本番環境
-- `develop`: 開発環境
-- `feature/*`: 新機能
-- `fix/*`: バグ修正
+### バックエンド
+- Python 3.11
+- Flask 3.0.0
+- PyYAML 6.0.1
+- pytest 7.4.3
 
-## 免責事項
+### インフラ
+- Vercel (フロントエンド)
+- Render (バックエンド)
+- Google Sheets (データベース)
 
-本サービスはエンターテインメント・自己理解支援を目的としています。医療・法律・投資助言ではありません。
+## 📖 ドキュメント
 
-## ライセンス
+- [デプロイ実行計画書](docs/deployment-plan.md)
+- [要件定義書](算命学の要件定義書.md)
+- [アルゴリズム仕様書](算命学命式計算アルゴリズム仕様.md)
+
+## 🤝 貢献
+
+プルリクエストを歓迎します。大きな変更の場合は、まずIssueを開いて変更内容を議論してください。
+
+## 📄 ライセンス
 
 未定
 
-## 連絡先
+## 👥 開発チーム
 
-GitHub Issues: https://github.com/taiyousan15/suumeigaku-maya-consul-system/issues
+- プロジェクト: 算命学×マヤ暦コンサルシステム
+- リポジトリ: https://github.com/taiyousan15/suumeigaku-maya-consul-system
+
+## 📞 サポート
+
+問題が発生した場合は、[GitHub Issues](https://github.com/taiyousan15/suumeigaku-maya-consul-system/issues) で報告してください。
+
+---
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

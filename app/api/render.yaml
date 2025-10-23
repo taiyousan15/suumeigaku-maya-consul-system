@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: suumeigaku-maya-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: API_BASE
+        value: /api/v1
+      - key: DEFAULT_MONTHLY_LIMIT
+        value: 50
+      - key: W_SUAN
+        value: 0.6
+      - key: W_MAYA
+        value: 0.4
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      # Secrets - 手動で設定が必要
+      # - CORS_ORIGINS
+      # - GOOGLE_SERVICE_ACCOUNT_JSON_BASE64
+      # - SHEETS_SPREADSHEET_ID
+      # - OPENAI_API_KEY
