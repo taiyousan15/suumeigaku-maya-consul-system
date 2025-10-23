@@ -78,16 +78,22 @@ export default function Result({ onNavigate, resultData }: ResultProps) {
               <h4 style={{ color: '#667eea', marginBottom: '16px' }}>算命学からの分析</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 <div>
-                  <strong>日干支:</strong> {suanming.day_stem}{suanming.day_branch}
+                  <strong>年柱:</strong> {suanming.year_gan}{suanming.year_shi}
                 </div>
                 <div>
-                  <strong>主星:</strong> {suanming.ten_stars.join('、')}
+                  <strong>月柱:</strong> {suanming.month_gan}{suanming.month_shi}
                 </div>
                 <div>
-                  <strong>従星:</strong> {suanming.twelve_houses.join('、')}
+                  <strong>日柱:</strong> {suanming.day_gan}{suanming.day_shi}
                 </div>
                 <div>
+                  <strong>時柱:</strong> {suanming.hour_gan}{suanming.hour_shi}
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
                   <strong>守護神:</strong> {suanming.guardian_gods.join('、')}
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <strong>忌神:</strong> {suanming.taboo_elements.join('、')}
                 </div>
               </div>
               <div style={{ marginTop: '16px' }}>

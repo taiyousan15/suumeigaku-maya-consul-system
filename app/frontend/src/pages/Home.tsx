@@ -48,12 +48,21 @@ export default function Home({ onNavigate, setResultData }: HomeProps) {
         },
         body: JSON.stringify({
           birthdate: birthdate,
-          birthtime: birthTime
+          birth_time: birthTime,
+          birth_place: birthPlace,
+          categories: categories,
+          free_text: freeText,
+          llm_prefs: {
+            temperature: temperature,
+            intensity: intensity,
+            max_tokens: 800
+          }
         })
       })
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `API Error: ${response.status}`)
       }
 
       const result = await response.json()
