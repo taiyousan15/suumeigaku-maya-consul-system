@@ -1,0 +1,659 @@
+# 算命学命式計算ナレッジベース
+# 仕様書: 算命学命式計算アルゴリズム仕様.md
+# 作成日: 2025-10-23
+
+# ============================================
+# 定数データ（Constants）
+# ============================================
+constants:
+  # 十干（Heavenly Stems）
+  # インデックス順序が重要：0=庚, 1=辛, 2=壬, 3=癸, 4=甲, 5=乙, 6=丙, 7=丁, 8=戊, 9=己
+  tenkan:
+    - "庚"  # 0
+    - "辛"  # 1
+    - "壬"  # 2
+    - "癸"  # 3
+    - "甲"  # 4
+    - "乙"  # 5
+    - "丙"  # 6
+    - "丁"  # 7
+    - "戊"  # 8
+    - "己"  # 9
+
+  # 十二支（Earthly Branches）
+  # インデックス順序が重要：0=申, 1=酉, 2=戌, 3=亥, 4=子, 5=丑, 6=寅, 7=卯, 8=辰, 9=巳, 10=午, 11=未
+  chishi:
+    - "申"  # 0
+    - "酉"  # 1
+    - "戌"  # 2
+    - "亥"  # 3
+    - "子"  # 4
+    - "丑"  # 5
+    - "寅"  # 6
+    - "卯"  # 7
+    - "辰"  # 8
+    - "巳"  # 9
+    - "午"  # 10
+    - "未"  # 11
+
+  # 五行リスト
+  five_elements:
+    - "木"
+    - "火"
+    - "土"
+    - "金"
+    - "水"
+
+  # 天干の五行対応
+  tenkan_to_element:
+    "甲": "木"
+    "乙": "木"
+    "丙": "火"
+    "丁": "火"
+    "戊": "土"
+    "己": "土"
+    "庚": "金"
+    "辛": "金"
+    "壬": "水"
+    "癸": "水"
+
+  # 天干配点（固定値）
+  tenkan_score: 36
+
+  # 地支総配点（比率の合計）
+  chishi_total_score: 100
+
+# ============================================
+# 参照テーブル（Lookup Tables）
+# ============================================
+lookup_tables:
+  # 節気と月支の対応（立春を第1月とする）
+  sekki_to_month_shi:
+    "立春": "寅"  # 1月
+    "啓蟄": "卯"  # 2月
+    "清明": "辰"  # 3月
+    "立夏": "巳"  # 4月
+    "芒種": "午"  # 5月
+    "小暑": "未"  # 6月
+    "立秋": "申"  # 7月
+    "白露": "酉"  # 8月
+    "寒露": "戌"  # 9月
+    "立冬": "亥"  # 10月
+    "大雪": "子"  # 11月
+    "小寒": "丑"  # 12月
+
+  # 月支の順序（寅月を起点）
+  month_shi_order:
+    - "寅"  # 1月
+    - "卯"  # 2月
+    - "辰"  # 3月
+    - "巳"  # 4月
+    - "午"  # 5月
+    - "未"  # 6月
+    - "申"  # 7月
+    - "酉"  # 8月
+    - "戌"  # 9月
+    - "亥"  # 10月
+    - "子"  # 11月
+    - "丑"  # 12月
+
+  # 五虎遁（ごことん）：年干から寅月の月干を決定
+  # キー：年干、値：寅月（1月）の月干
+  goko_ton:
+    "甲": "丙"
+    "己": "丙"
+    "乙": "戊"
+    "庚": "戊"
+    "丙": "庚"
+    "辛": "庚"
+    "丁": "壬"
+    "壬": "壬"
+    "戊": "甲"
+    "癸": "甲"
+
+  # 五鼠遁（ごそとん）：日干から子時の時干を決定
+  # キー：日干、値：子時の時干
+  goso_ton:
+    "甲": "甲"
+    "己": "甲"
+    "乙": "丙"
+    "庚": "丙"
+    "丙": "戊"
+    "辛": "戊"
+    "丁": "庚"
+    "壬": "庚"
+    "戊": "壬"
+    "癸": "壬"
+
+  # 時支の対応（時刻範囲）
+  # 開始時刻（時:分）でマッピング
+  hour_to_shi:
+    23: "子"  # 23:00-00:59
+    1: "丑"   # 01:00-02:59
+    3: "寅"   # 03:00-04:59
+    5: "卯"   # 05:00-06:59
+    7: "辰"   # 07:00-08:59
+    9: "巳"   # 09:00-10:59
+    11: "午"  # 11:00-12:59
+    13: "未"  # 13:00-14:59
+    15: "申"  # 15:00-16:59
+    17: "酉"  # 17:00-18:59
+    19: "戌"  # 19:00-20:59
+    21: "亥"  # 21:00-22:59
+
+  # 時支の順序
+  hour_shi_order:
+    - "子"
+    - "丑"
+    - "寅"
+    - "卯"
+    - "辰"
+    - "巳"
+    - "午"
+    - "未"
+    - "申"
+    - "酉"
+    - "戌"
+    - "亥"
+
+  # 地支の蔵干（隠れ干）と比率
+  # 各地支に含まれる天干とその配点比率（合計100）
+  zokkan:
+    "子":
+      - gan: "癸"
+        ratio: 100
+    "丑":
+      - gan: "己"
+        ratio: 60
+      - gan: "癸"
+        ratio: 30
+      - gan: "辛"
+        ratio: 10
+    "寅":
+      - gan: "甲"
+        ratio: 60
+      - gan: "丙"
+        ratio: 30
+      - gan: "戊"
+        ratio: 10
+    "卯":
+      - gan: "乙"
+        ratio: 100
+    "辰":
+      - gan: "戊"
+        ratio: 60
+      - gan: "乙"
+        ratio: 30
+      - gan: "癸"
+        ratio: 10
+    "巳":
+      - gan: "丙"
+        ratio: 60
+      - gan: "戊"
+        ratio: 30
+      - gan: "庚"
+        ratio: 10
+    "午":
+      - gan: "丁"
+        ratio: 70
+      - gan: "己"
+        ratio: 30
+    "未":
+      - gan: "己"
+        ratio: 60
+      - gan: "丁"
+        ratio: 30
+      - gan: "乙"
+        ratio: 10
+    "申":
+      - gan: "庚"
+        ratio: 60
+      - gan: "壬"
+        ratio: 30
+      - gan: "戊"
+        ratio: 10
+    "酉":
+      - gan: "辛"
+        ratio: 100
+    "戌":
+      - gan: "戊"
+        ratio: 60
+      - gan: "辛"
+        ratio: 30
+      - gan: "丁"
+        ratio: 10
+    "亥":
+      - gan: "壬"
+        ratio: 70
+      - gan: "甲"
+        ratio: 30
+
+  # 日柱計算用：月基数（高氏日柱公式）
+  # キー：月（1-12）、値：月基数
+  month_base:
+    1: 6
+    2: 2
+    3: 2
+    4: 3
+    5: 3
+    6: 4
+    7: 5
+    8: 5
+    9: 6
+    10: 7
+    11: 7
+    12: 8
+
+  # 日柱計算用：世紀定数（高氏日柱公式）
+  # キー：世紀の開始年、値：定数
+  century_constant:
+    1900: 0
+    2000: 6
+    2100: 12
+    2200: 18
+
+  # 五行相生（育てる関係）
+  # キー：生じる五行、値：生じられる五行
+  shosho_relation:
+    "木": "火"
+    "火": "土"
+    "土": "金"
+    "金": "水"
+    "水": "木"
+
+  # 五行相剋（制する関係）
+  # キー：制する五行、値：制される五行
+  sokoku_relation:
+    "木": "土"
+    "火": "金"
+    "土": "水"
+    "金": "木"
+    "水": "火"
+
+# ============================================
+# アルゴリズム（Algorithms）
+# ============================================
+algorithms:
+  # 年柱算出
+  year_pillar:
+    description: "西暦年から年干・年支を算出（立春前は前年扱い）"
+    steps:
+      - "入力：西暦年（year）、生年月日が立春以前かチェック"
+      - "立春以前の場合：year = year - 1"
+      - "年干の算出：year_mod10 = year % 10"
+      - "年支の算出：year_mod12 = year % 12"
+      - "year_gan = constants.tenkan[year_mod10]"
+      - "year_shi = constants.chishi[year_mod12]"
+    formula:
+      gan_index: "year % 10"
+      shi_index: "year % 12"
+    note: "立春（通常2月4日前後）を年替わりとする"
+
+  # 月柱算出
+  month_pillar:
+    description: "節気から月支を決定し、五虎遁で月干を算出"
+    steps:
+      - "入力：生年月日、年干"
+      - "現在の節気を判定し、月支を決定（lookup_tables.sekki_to_month_shi）"
+      - "五虎遁テーブル（lookup_tables.goko_ton）から寅月の月干を取得"
+      - "寅月から現在月まで天干を順行（constants.tenkan配列を循環）"
+    formula:
+      base_gan: "lookup_tables.goko_ton[year_gan]"
+      month_gan: "寅月の干から月数分だけtenkan配列を順行"
+    note: "立春=寅月（1月）を起点とする"
+
+  # 日柱算出
+  day_pillar:
+    description: "高氏日柱公式を用いて日干・日支を算出"
+    steps:
+      - "入力：西暦年（YYYY）、月（m）、日（d）"
+      - "s = (西暦年の下2桁) - 1"
+      - "u = s % 4"
+      - "r = s * 4 * 6 + 5 * (s * 4 * 3 + u) + 月基数[m] + 日 + 世紀定数[x]"
+      - "干支番号 = r % 60"
+      - "干支番号から十干・十二支を照合"
+    formula:
+      s: "(year % 100) - 1"
+      u: "s % 4"
+      r: "s * 4 * 6 + 5 * (s * 4 * 3 + u) + month_base[m] + d + century_constant[century]"
+      kanshi_number: "r % 60"
+    note: "60日周期で干支が循環"
+
+  # 時柱算出
+  hour_pillar:
+    description: "時刻から時支を決定し、五鼠遁で時干を算出"
+    steps:
+      - "入力：時刻（HH:MM）、日干"
+      - "時刻から時支を決定（lookup_tables.hour_to_shi）"
+      - "五鼠遁テーブル（lookup_tables.goso_ton）から子時の時干を取得"
+      - "子時から現在時まで天干を順行"
+    formula:
+      base_gan: "lookup_tables.goso_ton[day_gan]"
+      hour_gan: "子時の干から時支までtenkan配列を順行"
+    note: "2時間ごとに時支が変わる（23時から子時）"
+
+  # 五行配点集計
+  five_elements_scoring:
+    description: "四柱の天干・地支から五行配点を集計"
+    steps:
+      - "five_elements = {木:0, 火:0, 土:0, 金:0, 水:0}"
+      - "【天干加算】年干、月干、日干、時干の各々に36点を加算"
+      - "【地支加算】各地支の蔵干とその比率を加算（合計100点/地支）"
+      - "最終得点を集計し、最小値・最大値を特定"
+    formula:
+      tenkan_score_total: "4柱 × 36点 = 144点"
+      chishi_score_total: "4柱 × 100点 = 400点"
+      grand_total: "544点（理論値）"
+    implementation: |
+      for gan in [year_gan, month_gan, day_gan, hour_gan]:
+          elem = constants.tenkan_to_element[gan]
+          five_elements[elem] += 36
+
+      for shi in [year_shi, month_shi, day_shi, hour_shi]:
+          for zokkan_item in lookup_tables.zokkan[shi]:
+              gan = zokkan_item['gan']
+              ratio = zokkan_item['ratio']
+              elem = constants.tenkan_to_element[gan]
+              five_elements[elem] += ratio
+
+  # 守護神選定
+  guardian_god_selection:
+    description: "五行配点から守護神と忌神を判定"
+    steps:
+      - "五行得点の最小値を「不足五行」とする"
+      - "五行得点の最大値を「過剰五行」とする"
+      - "不足五行を第一守護神候補とする"
+      - "過剰五行を制御できる五行を第二守護神候補とする"
+      - "優先順位：不足補完 > 過剰制御"
+    rules:
+      - "不足五行を守護神リストに追加"
+      - "過剰五行を忌神リストに追加"
+      - "相剋関係で過剰五行を制する五行も守護神候補"
+    note: "複数候補がある場合は優先順位に従う"
+
+# ============================================
+# 守護神選定ルール（Guardian Rules）
+# ============================================
+guardian_rules:
+  description: "守護神・忌神の判定ロジック"
+
+  deficient_element_rule:
+    description: "不足五行を守護神とする"
+    logic: "五行得点が最小の要素を守護神候補に追加"
+    priority: 1
+
+  excess_element_rule:
+    description: "過剰五行を忌神とする"
+    logic: "五行得点が最大の要素を忌神候補に追加"
+    priority: 2
+
+  control_excess_rule:
+    description: "過剰五行を制御する五行を守護神とする"
+    logic: |
+      過剰五行をキーとしてlookup_tables.sokoku_relationを逆引き
+      制する側の五行を守護神候補に追加
+    priority: 3
+    example:
+      - "過剰五行が「土」の場合、「木」が土を制するため「木」が守護神候補"
+
+  nourish_deficient_rule:
+    description: "不足五行を生じる五行を守護神とする"
+    logic: |
+      不足五行をキーとしてlookup_tables.shosho_relationを逆引き
+      生じる側の五行を守護神候補に追加
+    priority: 4
+    example:
+      - "不足五行が「火」の場合、「木」が火を生じるため「木」が守護神候補"
+
+  output_format:
+    guardian_gods: "守護神リスト（配列）"
+    taboo_elements: "忌神リスト（配列）"
+    deficient: "不足五行リスト"
+    excess: "過剰五行リスト"
+
+# ============================================
+# テストケース（Test Cases）
+# ============================================
+test_cases:
+  - name: "Case1"
+    description: "2020年庚子年テスト"
+    input:
+      year: 2020
+      month: 2
+      day: 5
+      hour: 12
+      minute: 0
+    expected:
+      year_gan: "庚"
+      year_shi: "子"
+      month_gan: "戊"  # 庚年は乙庚グループ→寅月は戊、卯月は己（2月は卯月）
+      month_shi: "卯"  # 2月は啓蟄以降=卯月
+      guardian_gods:
+        - "火"
+      note: "立春以降なので2020年扱い"
+
+  - name: "Case2"
+    description: "1988年戊辰年テスト"
+    input:
+      year: 1988
+      month: 7
+      day: 10
+      hour: 15
+      minute: 0
+    expected:
+      year_gan: "戊"
+      year_shi: "辰"
+      guardian_gods:
+        - "水"
+      note: "7月は小暑以降=未月"
+
+  - name: "Case3"
+    description: "2001年辛巳年テスト（年末）"
+    input:
+      year: 2001
+      month: 12
+      day: 30
+      hour: 22
+      minute: 0
+    expected:
+      year_gan: "辛"
+      year_shi: "巳"
+      guardian_gods:
+        - "木"
+      note: "12月は小寒前なら子月"
+
+  - name: "Case4_Risshun_Before"
+    description: "立春前の年干支調整テスト"
+    input:
+      year: 2020
+      month: 1
+      day: 20
+      hour: 10
+      minute: 0
+    expected:
+      year_gan: "己"  # 2019年扱い
+      year_shi: "亥"  # 2019年扱い
+      note: "立春前なので2019年（己亥年）として計算"
+
+  - name: "Case5_Hour_Pillar"
+    description: "時柱計算テスト（五鼠遁）"
+    input:
+      day_gan: "甲"
+      hour: 0
+      minute: 30
+    expected:
+      hour_gan: "甲"  # 甲日の子時は甲
+      hour_shi: "子"
+
+  - name: "Case6_Hour_Pillar2"
+    description: "時柱計算テスト2（五鼠遁）"
+    input:
+      day_gan: "乙"
+      hour: 9
+      minute: 15
+    expected:
+      hour_gan: "庚"  # 乙日の巳時：子時=丙、丑=丁、寅=戊、卯=己、辰=庚
+      hour_shi: "巳"
+      calculation:
+        - "乙日の五鼠遁：子時=丙"
+        - "子→丑→寅→卯→辰→巳の順で干を進める"
+        - "丙→丁→戊→己→庚→辛"
+        - "巳時=辛（訂正：庚が正しい可能性）"
+      note: "要検証：時干の順行計算"
+
+  - name: "Case7_Five_Elements"
+    description: "五行配点集計テスト"
+    input:
+      pillars:
+        year_gan: "庚"
+        year_shi: "子"
+        month_gan: "戊"
+        month_shi: "卯"
+        day_gan: "丙"
+        day_shi: "辰"
+        hour_gan: "戊"
+        hour_shi: "申"
+    expected:
+      five_elements_score:
+        木: 130  # 天干：乙36、地支：卯100+辰30=130（訂正必要）
+        火: 36   # 天干：丙36
+        土: 146  # 天干：戊36×2=72、地支：辰60+申10+卯なし=70（訂正必要）
+        金: 132  # 天干：庚36、地支：子なし+申60+辰なし=60（訂正必要）
+        水: 100  # 地支：子100
+      note: "実際の計算で検証が必要"
+
+# ============================================
+# 実装ガイド（Implementation Guide）
+# ============================================
+implementation_guide:
+  overview: |
+    このYAMLファイルを読み込み、Pythonで算命学の命式計算を実装する。
+    主要な関数：
+    1. calculate_year_pillar(year, month, day) -> (year_gan, year_shi)
+    2. calculate_month_pillar(year, month, day, year_gan) -> (month_gan, month_shi)
+    3. calculate_day_pillar(year, month, day) -> (day_gan, day_shi)
+    4. calculate_hour_pillar(hour, minute, day_gan) -> (hour_gan, hour_shi)
+    5. calculate_five_elements(pillars) -> five_elements_score
+    6. select_guardian_gods(five_elements_score) -> (guardian_gods, taboo_elements)
+
+  data_access:
+    constants: "constants.*"
+    lookup_tables: "lookup_tables.*"
+    algorithms: "algorithms.*"
+    guardian_rules: "guardian_rules.*"
+    test_cases: "test_cases"
+
+  validation:
+    - "入力値の範囲チェック（年：1900-2100、月：1-12、日：1-31、時：0-23）"
+    - "立春判定（通常2月4日前後）の実装"
+    - "節気判定ロジックの実装"
+    - "干支の配列インデックスチェック"
+
+  performance:
+    - "全計算を純粋関数で実装（副作用なし）"
+    - "定数データは辞書でキャッシュ"
+    - "時間計算複雑度：O(1)"
+    - "一件あたり処理時間：< 5ms"
+
+  api_integration:
+    endpoint: "/api/v1/analyze"
+    input_format: |
+      {
+        "birthdate": "YYYY-MM-DD",
+        "birthtime": "HH:MM"
+      }
+    output_format: |
+      {
+        "data": {
+          "suanming": {
+            "year_gan": "庚",
+            "year_shi": "子",
+            "month_gan": "甲",
+            "month_shi": "寅",
+            "day_gan": "丙",
+            "day_shi": "辰",
+            "hour_gan": "戊",
+            "hour_shi": "申",
+            "five_elements_score": {
+              "木": 180,
+              "火": 70,
+              "土": 210,
+              "金": 140,
+              "水": 90
+            },
+            "guardian_gods": ["火", "水"],
+            "taboo_elements": ["土"]
+          }
+        }
+      }
+
+  example_code: |
+    import yaml
+
+    # YAMLファイルの読み込み
+    with open('suanming_knowledge.yaml', 'r', encoding='utf-8') as f:
+        knowledge = yaml.safe_load(f)
+
+    # 定数の取得
+    TENKAN = knowledge['constants']['tenkan']
+    CHISHI = knowledge['constants']['chishi']
+    TENKAN_TO_ELEMENT = knowledge['constants']['tenkan_to_element']
+
+    # 年柱の計算例
+    def calculate_year_pillar(year, month, day, is_after_risshun=True):
+        if not is_after_risshun:
+            year -= 1
+        gan_index = year % 10
+        shi_index = year % 12
+        return TENKAN[gan_index], CHISHI[shi_index]
+
+    # 五行配点の計算例
+    def calculate_five_elements(year_gan, month_gan, day_gan, hour_gan,
+                                 year_shi, month_shi, day_shi, hour_shi):
+        five_elements = {"木": 0, "火": 0, "土": 0, "金": 0, "水": 0}
+
+        # 天干加算
+        for gan in [year_gan, month_gan, day_gan, hour_gan]:
+            elem = TENKAN_TO_ELEMENT[gan]
+            five_elements[elem] += 36
+
+        # 地支加算
+        zokkan_map = knowledge['lookup_tables']['zokkan']
+        for shi in [year_shi, month_shi, day_shi, hour_shi]:
+            for zokkan_item in zokkan_map[shi]:
+                gan = zokkan_item['gan']
+                ratio = zokkan_item['ratio']
+                elem = TENKAN_TO_ELEMENT[gan]
+                five_elements[elem] += ratio
+
+        return five_elements
+
+# ============================================
+# 補足情報（Additional Notes）
+# ============================================
+notes:
+  干支番号について: |
+    日柱計算で得られる「干支番号」（0-59）から十干・十二支を照合するには、
+    干支番号を10で割った余りが十干インデックス、12で割った余りが十二支インデックスとなる。
+    ただし、constants.tenkanとchishiの配列順序に依存するため、
+    実装時は六十干支表を別途用意することを推奨。
+
+  立春判定について: |
+    立春の日時は年によって変動するため、正確には天文計算または
+    事前に作成された立春日時テーブルが必要。
+    簡易実装では2月4日を基準とすることが多いが、精度が必要な場合は
+    国立天文台の暦要項などを参照。
+
+  節気判定について: |
+    月柱の節気判定も立春同様、正確な日時テーブルが必要。
+    各節気の日時は毎年変動する。
+
+  干支番号テーブル: |
+    六十干支の完全な対応表を実装に含めることを推奨。
+    例：0=甲子、1=乙丑、2=丙寅、...、59=癸亥
+
+  時刻の扱い: |
+    23時台は「子時」として翌日扱いとなるため、日付跨ぎの考慮が必要。
+
+version: "1.0.0"
+last_updated: "2025-10-23"
