@@ -79,7 +79,8 @@ http://localhost:3001/ を開いて、生年月日を入力すると分析結果
 │   ├── api/                          # バックエンドAPI
 │   │   ├── main.py                   # Flask APIエントリーポイント
 │   │   ├── suanming.py               # 算命学計算エンジン
-│   │   ├── maya.py                   # マヤ暦計算エンジン
+│   │   ├── maya.py                   # マヤ暦計算エンジン（シンプル版）
+│   │   ├── maya_improved.py          # マヤ暦計算エンジン（改良版・Dreamspell準拠）
 │   │   ├── suanming_knowledge.yaml   # 算命学ナレッジベース
 │   │   └── requirements.txt          # Python依存パッケージ
 │   └── frontend/                     # フロントエンド

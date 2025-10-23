@@ -9,7 +9,7 @@ from datetime import datetime
 import traceback
 import uuid
 from suanming import SuanmingCalculator
-from maya import analyze_maya
+from maya_improved import analyze_maya
 
 app = Flask(__name__)
 CORS(app)  # フロントエンドからのアクセスを許可
