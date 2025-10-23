@@ -39,61 +39,31 @@ export default function Home({ onNavigate, setResultData }: HomeProps) {
 
     setLoading(true)
 
-    // モックデータ（後でAPI接続に置き換え）
-    setTimeout(() => {
-      const mockResult = {
-        request_id: 'mock-' + Date.now(),
-        ts: new Date().toISOString(),
-        data: {
-          suanming: {
-            day_stem: '甲',
-            day_branch: '子',
-            ten_stars: ['貫索星', '石門星', '鳳閣星'],
-            twelve_houses: ['天貴星', '天印星', '天恍星'],
-            periods: [{ from: '2025-01-01', to: '2034-12-31', label: '大運第3期' }],
-            five_elements_score: { 木: 180, 火: 70, 土: 210, 金: 140, 水: 90 },
-            guardian_gods: ['火', '水'],
-            taboo_elements: ['土']
-          },
-          maya: {
-            kin: 128,
-            solar_seal: '黄色い星',
-            tone: 11,
-            wavespell: '青い猿'
-          },
-          scores: {
-            overall: 0.72,
-            work: 0.68,
-            love: 0.75,
-            health: 0.61,
-            growth: 0.78
-          },
-          insights: [
-            {
-              title: '仕事運',
-              advice: 'リーダーシップを発揮する時期です。新しいプロジェクトへの挑戦が吉。'
-            },
-            {
-              title: '恋愛運',
-              advice: '相手の気持ちを理解することで、関係が深まります。'
-            },
-            {
-              title: '健康運',
-              advice: '休息を大切にしましょう。無理は禁物です。'
-            }
-          ],
-          llm: {
-            used_tokens: 680,
-            temperature: temperature,
-            intensity: intensity
-          }
-        }
+    try {
+      // 実際のAPIを呼び出し
+      const response = await fetch('http://localhost:8080/api/v1/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          birthdate: birthdate,
+          birthtime: birthTime
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`)
       }
 
-      setResultData(mockResult)
+      const result = await response.json()
+      setResultData(result)
       setLoading(false)
       onNavigate('result')
-    }, 1500)
+    } catch (err: any) {
+      setError(`エラーが発生しました: ${err.message}`)
+      setLoading(false)
+    }
   }
 
   return (
