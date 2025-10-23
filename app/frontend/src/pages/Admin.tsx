@@ -1,23 +1,86 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface AdminProps {
   onNavigate: (page: 'home' | 'result' | 'history' | 'admin') => void
 }
 
-export default function Admin({ onNavigate }: AdminProps) {
+export default function Admin({ onNavigate: _onNavigate }: AdminProps) {
   const [wSuan, setWSuan] = useState(0.6)
   const [wMaya, setWMaya] = useState(0.4)
   const [maxTokens, setMaxTokens] = useState(900)
   const [monthlyLimit, setMonthlyLimit] = useState(50)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  const handleSave = () => {
+  // 設定を読み込む
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('http://localhost:8080/api/v1/settings')
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const result = await response.json()
+
+        if (result.status === 'ok') {
+          const { weights, monthly_limit } = result.data
+          setWSuan(weights.w_suan)
+          setWMaya(weights.w_maya)
+          setMonthlyLimit(monthly_limit)
+        } else {
+          setError(result.message || '設定の取得に失敗しました')
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings:', err)
+        setError('設定の取得に失敗しました。サーバーが起動しているか確認してください。')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSettings()
+  }, [])
+
+  const handleSave = async () => {
     // 重みの合計チェック
     if (Math.abs(wSuan + wMaya - 1.0) > 0.01) {
       alert('重みの合計は1.0である必要があります')
       return
     }
 
-    alert('設定を保存しました')
+    try {
+      setSuccessMessage(null)
+      setError(null)
+
+      const response = await fetch('http://localhost:8080/api/v1/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          weights: {
+            w_suan: wSuan,
+            w_maya: wMaya
+          }
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.status === 'ok') {
+        setSuccessMessage('設定を保存しました')
+        setTimeout(() => setSuccessMessage(null), 3000)
+      } else {
+        setError(result.message || '設定の保存に失敗しました')
+      }
+    } catch (err) {
+      console.error('Failed to save settings:', err)
+      setError('設定の保存に失敗しました')
+    }
   }
 
   return (
@@ -27,6 +90,41 @@ export default function Admin({ onNavigate }: AdminProps) {
         <p style={{ color: '#666', marginBottom: '30px' }}>
           ※ この画面は管理者のみアクセス可能です
         </p>
+
+        {error && (
+          <div style={{
+            padding: '15px',
+            background: '#fee',
+            borderRadius: '8px',
+            color: '#c00',
+            marginBottom: '20px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div style={{
+            padding: '15px',
+            background: '#e8f5e9',
+            borderRadius: '8px',
+            color: '#2e7d32',
+            marginBottom: '20px'
+          }}>
+            {successMessage}
+          </div>
+        )}
+
+        {loading ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px',
+            color: '#666'
+          }}>
+            <p>設定を読み込み中...</p>
+          </div>
+        ) : (
+          <>
 
         {/* 重み設定 */}
         <div style={{ marginBottom: '30px' }}>
@@ -189,6 +287,8 @@ export default function Admin({ onNavigate }: AdminProps) {
         >
           設定を保存
         </button>
+          </>
+        )}
       </div>
     </div>
   )

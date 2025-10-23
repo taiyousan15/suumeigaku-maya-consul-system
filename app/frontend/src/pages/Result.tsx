@@ -106,7 +106,7 @@ export default function Result({ onNavigate, resultData }: ResultProps) {
                       borderRadius: '6px',
                       fontSize: '14px'
                     }}>
-                      {element}: {score}
+                      {element}: {String(score)}
                     </span>
                   ))}
                 </div>
